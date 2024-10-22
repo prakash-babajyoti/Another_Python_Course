@@ -1,35 +1,72 @@
-st.markdown("""
-    <style>
-    /* Override Quill editor styles */
-    .ql-editor {
-        font-size: 18px !important;      /* Change font size */
-        color: #333 !important;          /* Set text color */
-        line-height: 1.8 !important;     /* Set line height */
-        padding: 15px !important;        /* Add padding to content */
-        background-color: #f9f9f9 !important; /* Light background color */
-        border-radius: 5px !important;   /* Rounded corners for editor */
-    }
+import unittest
+from unittest.mock import patch, MagicMock
+from your_module import EditorComponent  # Replace 'your_module' with the actual module name
 
-    /* Style the container of the Quill editor */
-    .ql-container {
-        border: 2px solid #ccc !important;      /* Add a border around the editor */
-        border-radius: 5px !important;          /* Rounded corners for container */
-        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1) !important; /* Add shadow */
-    }
 
-    /* Style the Quill toolbar */
-    .ql-toolbar {
-        background-color: #e0e0e0 !important;  /* Light background for toolbar */
-        border-radius: 5px 5px 0 0 !important;  /* Rounded toolbar at the top */
-        padding: 10px !important;               /* Add padding to toolbar */
-    }
+class TestEditorComponent(unittest.TestCase):
+    
+    @patch('your_module.st')  # Mocking Streamlit as `st`
+    def test_init_method(self, mock_st):
+        # Mock the session state and initialize the EditorComponent
+        mock_st.session_state = {}
+        content = "Initial content"
+        editor_id = "editor_1"
+        component = EditorComponent(content, editor_id)
+        
+        # Assert that the session state is set correctly
+        self.assertIn(f'editor_content_{editor_id}', mock_st.session_state)
+        self.assertEqual(mock_st.session_state[f'editor_content_{editor_id}'], content)
+    
+    @patch('your_module.st')  # Mocking Streamlit as `st`
+    def test_render_component(self, mock_st):
+        # Mock Streamlit's functions
+        mock_st.session_state = {f'editor_content_editor_1': "Some content"}
+        mock_st_quill = MagicMock()
+        mock_st.st_quill = mock_st_quill
+        mock_st_quill.return_value = "Updated content"
+        
+        # Create an instance of the EditorComponent
+        component = EditorComponent("Initial content", "editor_1")
+        component.render_component()
+        
+        # Assert that `st_quill` was called and session state is updated
+        mock_st_quill.assert_called_once()
+        self.assertEqual(component.editor_content, "Updated content")
+    
+    @patch('your_module.st')  # Mocking Streamlit as `st`
+    def test_handle_save(self, mock_st):
+        # Mock the session state and Streamlit functions
+        mock_st.session_state = {f'editor_content_editor_1': "Saved content"}
+        mock_on_save = MagicMock()
 
-    /* Customize specific toolbar buttons */
-    .ql-bold {
-        color: red !important;  /* Make the bold button red */
-    }
+        # Create an instance of the EditorComponent with the on_save callback
+        component = EditorComponent("Initial content", "editor_1", on_save=mock_on_save)
+        component.editor_content = "Editor content"
+        
+        # Call the handle_save method
+        component.handle_save()
+        
+        # Assert that the on_save callback was called with the correct arguments
+        mock_on_save.assert_called_once_with("Editor content", "editor_1")
 
-    .ql-italic {
-        color: blue !important;  /* Make the italic button blue */
-    }
-    </style>
+    @patch('your_module.st')  # Mocking Streamlit as `st`
+    def test_convert_markdown_to_html(self, mock_st):
+        # Test the conversion method
+        markdown_text = "# Heading"
+        html_output = EditorComponent.convert_markdown_to_html(markdown_text)
+        
+        # Assert that markdown2 conversion works as expected
+        self.assertIn("<h1>Heading</h1>", html_output)
+
+    @patch('your_module.st')  # Mocking Streamlit as `st`
+    def test_convert_html_to_markdown(self, mock_st):
+        # Test the conversion method from HTML to Markdown
+        html_text = "<h1>Heading</h1>"
+        markdown_output = EditorComponent.convert_html_to_markdown(html_text)
+        
+        # Assert that html2text conversion works as expected
+        self.assertIn("# Heading", markdown_output)
+
+
+if __name__ == '__main__':
+    unittest.main()
