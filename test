@@ -1,0 +1,35 @@
+st.markdown("""
+    <style>
+    /* Override Quill editor styles */
+    .ql-editor {
+        font-size: 18px !important;      /* Change font size */
+        color: #333 !important;          /* Set text color */
+        line-height: 1.8 !important;     /* Set line height */
+        padding: 15px !important;        /* Add padding to content */
+        background-color: #f9f9f9 !important; /* Light background color */
+        border-radius: 5px !important;   /* Rounded corners for editor */
+    }
+
+    /* Style the container of the Quill editor */
+    .ql-container {
+        border: 2px solid #ccc !important;      /* Add a border around the editor */
+        border-radius: 5px !important;          /* Rounded corners for container */
+        box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1) !important; /* Add shadow */
+    }
+
+    /* Style the Quill toolbar */
+    .ql-toolbar {
+        background-color: #e0e0e0 !important;  /* Light background for toolbar */
+        border-radius: 5px 5px 0 0 !important;  /* Rounded toolbar at the top */
+        padding: 10px !important;               /* Add padding to toolbar */
+    }
+
+    /* Customize specific toolbar buttons */
+    .ql-bold {
+        color: red !important;  /* Make the bold button red */
+    }
+
+    .ql-italic {
+        color: blue !important;  /* Make the italic button blue */
+    }
+    </style>
