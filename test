@@ -1,15 +1,18 @@
 DECLARE @SearchString NVARCHAR(100) = 'your_string'
 DECLARE @SQL NVARCHAR(MAX) = ''
 
--- Generate the dynamic SQL to select matching rows
-SELECT @SQL = @SQL + 'SELECT ''' + QUOTENAME(TABLE_SCHEMA) + '.' + QUOTENAME(TABLE_NAME) + 
-    ''' AS TableName, ''' + QUOTENAME(COLUMN_NAME) + ''' AS ColumnName, * FROM ' + QUOTENAME(TABLE_SCHEMA) + '.' + QUOTENAME(TABLE_NAME) + 
-    ' WHERE ' + QUOTENAME(COLUMN_NAME) + ' LIKE ''%' + @SearchString + '%' UNION ALL '
-FROM INFORMATION_SCHEMA.COLUMNS
-WHERE DATA_TYPE IN ('char', 'varchar', 'nchar', 'nvarchar', 'text')
-AND TABLE_CATALOG = 'your_database_name'
+-- Build dynamic SQL to search across all columns of text-like data types
+SELECT @SQL = @SQL + 
+    'SELECT ''' + s.name + ''' AS SchemaName, ''' + t.name + ''' AS TableName, ''' + c.name + ''' AS ColumnName, * FROM ' 
+    + QUOTENAME(s.name) + '.' + QUOTENAME(t.name) +
+    ' WHERE ' + QUOTENAME(c.name) + ' LIKE ''%' + @SearchString + '%'' UNION ALL '
+FROM sys.columns c
+JOIN sys.tables t ON c.object_id = t.object_id
+JOIN sys.schemas s ON t.schema_id = s.schema_id
+JOIN sys.types ty ON c.user_type_id = ty.user_type_id
+WHERE ty.name IN ('char', 'varchar', 'nchar', 'nvarchar', 'text')
 
--- Remove the last 'UNION ALL' for the final query
+-- Remove the last 'UNION ALL' to avoid syntax error
 SET @SQL = LEFT(@SQL, LEN(@SQL) - 10)
 
 -- Execute the dynamic SQL
