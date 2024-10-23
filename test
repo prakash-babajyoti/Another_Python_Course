@@ -1,72 +1,16 @@
-import unittest
-from unittest.mock import patch, MagicMock
-from your_module import EditorComponent  # Replace 'your_module' with the actual module name
+DECLARE @SearchString NVARCHAR(100) = 'your_string'
+DECLARE @SQL NVARCHAR(MAX) = ''
 
+-- Generate the dynamic SQL to select matching rows
+SELECT @SQL = @SQL + 'SELECT ''' + QUOTENAME(TABLE_SCHEMA) + '.' + QUOTENAME(TABLE_NAME) + 
+    ''' AS TableName, ''' + QUOTENAME(COLUMN_NAME) + ''' AS ColumnName, * FROM ' + QUOTENAME(TABLE_SCHEMA) + '.' + QUOTENAME(TABLE_NAME) + 
+    ' WHERE ' + QUOTENAME(COLUMN_NAME) + ' LIKE ''%' + @SearchString + '%' UNION ALL '
+FROM INFORMATION_SCHEMA.COLUMNS
+WHERE DATA_TYPE IN ('char', 'varchar', 'nchar', 'nvarchar', 'text')
+AND TABLE_CATALOG = 'your_database_name'
 
-class TestEditorComponent(unittest.TestCase):
-    
-    @patch('your_module.st')  # Mocking Streamlit as `st`
-    def test_init_method(self, mock_st):
-        # Mock the session state and initialize the EditorComponent
-        mock_st.session_state = {}
-        content = "Initial content"
-        editor_id = "editor_1"
-        component = EditorComponent(content, editor_id)
-        
-        # Assert that the session state is set correctly
-        self.assertIn(f'editor_content_{editor_id}', mock_st.session_state)
-        self.assertEqual(mock_st.session_state[f'editor_content_{editor_id}'], content)
-    
-    @patch('your_module.st')  # Mocking Streamlit as `st`
-    def test_render_component(self, mock_st):
-        # Mock Streamlit's functions
-        mock_st.session_state = {f'editor_content_editor_1': "Some content"}
-        mock_st_quill = MagicMock()
-        mock_st.st_quill = mock_st_quill
-        mock_st_quill.return_value = "Updated content"
-        
-        # Create an instance of the EditorComponent
-        component = EditorComponent("Initial content", "editor_1")
-        component.render_component()
-        
-        # Assert that `st_quill` was called and session state is updated
-        mock_st_quill.assert_called_once()
-        self.assertEqual(component.editor_content, "Updated content")
-    
-    @patch('your_module.st')  # Mocking Streamlit as `st`
-    def test_handle_save(self, mock_st):
-        # Mock the session state and Streamlit functions
-        mock_st.session_state = {f'editor_content_editor_1': "Saved content"}
-        mock_on_save = MagicMock()
+-- Remove the last 'UNION ALL' for the final query
+SET @SQL = LEFT(@SQL, LEN(@SQL) - 10)
 
-        # Create an instance of the EditorComponent with the on_save callback
-        component = EditorComponent("Initial content", "editor_1", on_save=mock_on_save)
-        component.editor_content = "Editor content"
-        
-        # Call the handle_save method
-        component.handle_save()
-        
-        # Assert that the on_save callback was called with the correct arguments
-        mock_on_save.assert_called_once_with("Editor content", "editor_1")
-
-    @patch('your_module.st')  # Mocking Streamlit as `st`
-    def test_convert_markdown_to_html(self, mock_st):
-        # Test the conversion method
-        markdown_text = "# Heading"
-        html_output = EditorComponent.convert_markdown_to_html(markdown_text)
-        
-        # Assert that markdown2 conversion works as expected
-        self.assertIn("<h1>Heading</h1>", html_output)
-
-    @patch('your_module.st')  # Mocking Streamlit as `st`
-    def test_convert_html_to_markdown(self, mock_st):
-        # Test the conversion method from HTML to Markdown
-        html_text = "<h1>Heading</h1>"
-        markdown_output = EditorComponent.convert_html_to_markdown(html_text)
-        
-        # Assert that html2text conversion works as expected
-        self.assertIn("# Heading", markdown_output)
-
-
-if __name__ == '__main__':
-    unittest.main()
+-- Execute the dynamic SQL
+EXEC sp_executesql @SQL
